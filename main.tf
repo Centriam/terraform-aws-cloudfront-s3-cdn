@@ -123,7 +123,8 @@ resource "aws_cloudfront_distribution" "default" {
   aliases = ["${var.aliases}"]
 
   origin {
-    domain_name = "${local.bucket_domain_name}"
+    # domain_name = "${local.bucket_domain_name}"
+    domain_name = "${aws_s3_bucket.origin.website_domain}"
     origin_id   = "${module.distribution_label.id}"
     origin_path = "${var.origin_path}"
 
