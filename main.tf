@@ -75,10 +75,7 @@ resource "aws_s3_bucket" "origin" {
   force_destroy = "${var.origin_force_destroy}"
   region        = "${data.aws_region.current.name}"
 
-  website {
-    index_document = "${var.default_root_object}"
-    error_document = "${var.default_root_object}"
-  }
+  website = ["${local.website_final}"]
 
   cors_rule {
     allowed_headers = "${var.cors_allowed_headers}"
@@ -186,8 +183,8 @@ resource "aws_cloudfront_distribution" "default" {
     origin_id   = "${module.distribution_label.id}"
     origin_path = "${var.origin_path}"
 
-    s3_origin_config     = "${local.cf_s3_origin_config_final}"
-    custom_origin_config = "${local.cf_custom_origin_config_final}"
+    s3_origin_config     = ["${local.cf_s3_origin_config_final}"]
+    custom_origin_config = ["${local.cf_custom_origin_config_final}"]
   }
 
   viewer_certificate {
