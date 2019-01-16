@@ -275,3 +275,9 @@ variable "web_acl_id" {
   default     = ""
   description = "ID of the AWS WAF web ACL that is associated with the distribution"
 }
+
+variable "static_hosting" {
+  type        = "boolean"
+  default     = false
+  description = "Use S3 static hosting"
+}
