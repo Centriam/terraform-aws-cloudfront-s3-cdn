@@ -19,17 +19,7 @@ data "aws_iam_policy_document" "origin" {
 
     principals {
       type        = "AWS"
-      identifiers = ["${aws_cloudfront_origin_access_identity.default.iam_arn}"]
-    }
-  }
-
-  statement {
-    actions   = ["s3:ListBucket"]
-    resources = ["arn:aws:s3:::$${bucket_name}"]
-
-    principals {
-      type        = "AWS"
-      identifiers = ["${aws_cloudfront_origin_access_identity.default.iam_arn}"]
+      identifiers = ["*"]
     }
   }
 }
@@ -123,7 +113,6 @@ resource "aws_cloudfront_distribution" "default" {
   aliases = ["${var.aliases}"]
 
   origin {
-    # domain_name = "${local.bucket_domain_name}"
     domain_name = "${aws_s3_bucket.origin.website_endpoint}"
     origin_id   = "${module.distribution_label.id}"
     origin_path = "${var.origin_path}"
@@ -136,10 +125,6 @@ resource "aws_cloudfront_distribution" "default" {
       origin_read_timeout      = 30
       origin_ssl_protocols     = ["TLSv1", "TLSv1.1", "TLSv1.2"]
     }
-
-    # s3_origin_config {
-    #   origin_access_identity = "${aws_cloudfront_origin_access_identity.default.cloudfront_access_identity_path}"
-    # }
   }
 
   viewer_certificate {
