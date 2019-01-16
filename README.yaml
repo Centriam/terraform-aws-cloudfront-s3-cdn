@@ -7,6 +7,20 @@
 # Name of this project
 name: terraform-aws-cloudfront-s3-cdn
 
+# Tags of this project
+tags:
+  - aws
+  - terraform
+  - terraform-modules
+  - cdn
+  - cloudfront
+  - cloudfront-logs
+  - s3
+
+# Categories of this project
+categories:
+  - terraform-modules/cdn
+
 # Logo for this project
 #logo: docs/logo.png
 
@@ -38,18 +52,18 @@ related:
 
 # Short description of this project
 description: |-
-  Terraform module to easily provision an AWS CloudFront CDN with an S3 or custom origin.
+  Terraform module to provision an AWS CloudFront CDN with an S3 origin.
 
 # How to use this project
 usage: |-
   ```hcl
   module "cdn" {
     source           = "git::https://github.com/cloudposse/terraform-aws-cloudfront-s3-cdn.git?ref=master"
-    namespace        = "${var.namespace}"
-    stage            = "${var.stage}"
-    name             = "${var.name}"
-    aliases          = "${var.hostname}"
-    parent_zone_name = "${var.parent_zone_name}"
+    namespace        = "eg"
+    stage            = "prod"
+    name             = "app"
+    aliases          = ["assets.cloudposse.com"]
+    parent_zone_name = "cloudposse.com"
   }
   ```
 
