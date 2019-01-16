@@ -58,6 +58,11 @@ resource "aws_s3_bucket" "origin" {
   force_destroy = "${var.origin_force_destroy}"
   region        = "${data.aws_region.current.name}"
 
+  website {
+    index_document = "${var.default_root_object}"
+    error_document = "${var.default_root_object}"
+  }
+
   cors_rule {
     allowed_headers = "${var.cors_allowed_headers}"
     allowed_methods = "${var.cors_allowed_methods}"
