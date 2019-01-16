@@ -277,7 +277,7 @@ variable "web_acl_id" {
 }
 
 variable "static_hosting" {
-  type        = "boolean"
-  default     = false
+  type        = "string"
+  default     = "false"
   description = "Use S3 static hosting"
 }
