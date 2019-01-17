@@ -19,17 +19,7 @@ data "aws_iam_policy_document" "origin" {
 
     principals {
       type        = "AWS"
-      identifiers = ["${var.static_hosting ? "*" : aws_cloudfront_origin_access_identity.default.iam_arn}"]
-    }
-  }
-
-  statement {
-    actions   = ["s3:ListBucket"]
-    resources = ["arn:aws:s3:::$${bucket_name}$${origin_path}*"]
-
-    principals {
-      type        = "AWS"
-      identifiers = ["${aws_cloudfront_origin_access_identity.default.iam_arn}"]
+      identifiers = ["*"]
     }
   }
 }
@@ -49,23 +39,6 @@ resource "aws_s3_bucket_policy" "default" {
 }
 
 data "aws_region" "current" {}
-
-locals {
-  website = [
-    {
-      key   = "index_document"
-      value = "${var.default_root_object}"
-    },
-    {
-      key   = "error_document"
-      value = "${var.default_root_object}"
-    },
-  ]
-
-  # Only include website config if using static hosting
-  website_index_from = "${var.static_hosting ? 0 : length(local.website)}"
-  website_final      = "${slice(local.website, local.website_index_from, length(local.website))}"
-}
 
 resource "aws_s3_bucket" "origin" {
   count         = "${signum(length(var.origin_bucket)) == 1 ? 0 : 1}"
@@ -121,48 +94,6 @@ data "aws_s3_bucket" "selected" {
 locals {
   bucket             = "${join("", compact(concat(list(var.origin_bucket), concat(list(""), aws_s3_bucket.origin.*.id))))}"
   bucket_domain_name = "${var.use_regional_s3_endpoint == "true" ? format("%s.s3-%s.amazonaws.com" , local.bucket, data.aws_s3_bucket.selected.region): format(var.bucket_domain_format, local.bucket)}"
-
-  cf_s3_origin_config = [
-    {
-      key   = "origin_access_identity"
-      value = "${aws_cloudfront_origin_access_identity.default.cloudfront_access_identity_path}"
-    },
-  ]
-
-  # Don't include s3_origin_config if using static hosting
-  cf_s3_origin_config_index_from = "${var.static_hosting ? length(local.cf_s3_origin_config) : 0}"
-  cf_s3_origin_config_final      = "${slice(local.cf_s3_origin_config, local.cf_s3_origin_config_index_from, length(local.cf_s3_origin_config))}"
-
-  cf_custom_origin_config = [
-    {
-      key   = "http_port"
-      value = 80
-    },
-    {
-      key   = "https_port"
-      value = 443
-    },
-    {
-      key   = "origin_keepalive_timeout"
-      value = 5
-    },
-    {
-      key   = "origin_protocol_policy"
-      value = "http-only"
-    },
-    {
-      key   = "origin_read_timeout"
-      value = 30
-    },
-    {
-      key   = "origin_ssl_protocols"
-      value = ["TLSv1", "TLSv1.1", "TLSv1.2"]
-    },
-  ]
-
-  # Only include custom_origin_config if using static hosting
-  cf_custom_origin_config_index_from = "${var.static_hosting ? 0 : length(local.cf_custom_origin_config)}"
-  cf_custom_origin_config_final      = "${slice(local.cf_custom_origin_config, local.cf_custom_origin_config_index_from, length(local.cf_custom_origin_config))}"
 }
 
 resource "aws_cloudfront_distribution" "default" {
@@ -186,8 +117,14 @@ resource "aws_cloudfront_distribution" "default" {
     origin_id   = "${module.distribution_label.id}"
     origin_path = "${var.origin_path}"
 
-    s3_origin_config     = "${local.cf_s3_origin_config_final}"
-    custom_origin_config = "${local.cf_custom_origin_config_final}"
+    custom_origin_config {
+      http_port                = 80
+      https_port               = 443
+      origin_keepalive_timeout = 5
+      origin_protocol_policy   = "http-only"
+      origin_read_timeout      = 30
+      origin_ssl_protocols     = ["TLSv1", "TLSv1.1", "TLSv1.2"]
+    }
   }
 
   viewer_certificate {
