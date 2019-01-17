@@ -19,17 +19,7 @@ data "aws_iam_policy_document" "origin" {
 
     principals {
       type        = "AWS"
-      identifiers = ["${aws_cloudfront_origin_access_identity.default.iam_arn}"]
-    }
-  }
-
-  statement {
-    actions   = ["s3:ListBucket"]
-    resources = ["arn:aws:s3:::$${bucket_name}"]
-
-    principals {
-      type        = "AWS"
-      identifiers = ["${aws_cloudfront_origin_access_identity.default.iam_arn}"]
+      identifiers = ["*"]
     }
   }
 }
@@ -57,6 +47,11 @@ resource "aws_s3_bucket" "origin" {
   tags          = "${module.origin_label.tags}"
   force_destroy = "${var.origin_force_destroy}"
   region        = "${data.aws_region.current.name}"
+
+  website {
+    index_document = "${var.default_root_object}"
+    error_document = "${var.default_root_object}"
+  }
 
   cors_rule {
     allowed_headers = "${var.cors_allowed_headers}"
@@ -118,12 +113,17 @@ resource "aws_cloudfront_distribution" "default" {
   aliases = ["${var.aliases}"]
 
   origin {
-    domain_name = "${local.bucket_domain_name}"
+    domain_name = "${aws_s3_bucket.origin.website_endpoint}"
     origin_id   = "${module.distribution_label.id}"
     origin_path = "${var.origin_path}"
 
-    s3_origin_config {
-      origin_access_identity = "${aws_cloudfront_origin_access_identity.default.cloudfront_access_identity_path}"
+    custom_origin_config {
+      http_port                = 80
+      https_port               = 443
+      origin_keepalive_timeout = 5
+      origin_protocol_policy   = "http-only"
+      origin_read_timeout      = 30
+      origin_ssl_protocols     = ["TLSv1", "TLSv1.1", "TLSv1.2"]
     }
   }
 
